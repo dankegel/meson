@@ -5,17 +5,15 @@
 simple_ch = custom_target(
   'simple.pb.[ch]',
   input    : ['com/mesonbuild/simple.proto'],
-  output   : ['com/mesonbuild/simple.pb.cc', 'com/mesonbuild/simple.pb.h'],
-  # using @OUTDIR@ here results in com/mesonbuild being repeated
-  command  : [protoc, '--proto_path=@CURRENT_SOURCE_DIR@', '--cpp_out=withpath', '@INPUT@'],
+  output   : ['simple.pb.cc', 'simple.pb.h'],
+  command  : [protoc, '--proto_path=@CURRENT_SOURCE_DIR@', '--cpp_out=@OUTDIR@', '@INPUT@'],
 )
 
 complex_ch = custom_target(
   'complex.pb.[ch]',
   input    : ['com/mesonbuild/subsite/complex.proto'],
-  output   : ['com/mesonbuild/subsite/complex.pb.cc', 'com/mesonbuild/subsite/complex.pb.h'],
-  # using @OUTDIR@ here results in com/mesonbuild/subsite being repeated
-  command  : [protoc, '--proto_path=@CURRENT_SOURCE_DIR@', '--cpp_out=withpath', '@INPUT@'],
+  output   : ['complex.pb.cc', 'complex.pb.h'],
+  command  : [protoc, '--proto_path=@CURRENT_SOURCE_DIR@', '--cpp_out=@OUTDIR@', '@INPUT@'],
 )
 
 e = executable('pathprog', 'pathprog.cpp', simple_ch, complex_ch,
