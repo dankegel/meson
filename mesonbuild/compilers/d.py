@@ -218,7 +218,8 @@ class DmdLikeCompilerMixin:
     def gen_import_library_args(self, implibname):
         return self.linker.import_library_args(implibname)
 
-    def build_rpath_args(self, env, build_dir, from_dir, rpath_paths, build_rpath, install_rpath):
+    def build_rpath_args(self, env, build_dir, from_dir, rpath_paths, build_rpath, install_rpath,
+                         rpath_dirs_to_remove):
         if self.info.is_windows():
             return []
 
@@ -229,7 +230,7 @@ class DmdLikeCompilerMixin:
             # split into two separate arguments both prefaced with the -L=.
             args = []
             for r in super().build_rpath_args(
-                    env, build_dir, from_dir, rpath_paths, build_rpath, install_rpath):
+                    env, build_dir, from_dir, rpath_paths, build_rpath, install_rpath, rpath_dirs_to_remove):
                 if ',' in r:
                     a, b = r.split(',', maxsplit=1)
                     args.append(a)
@@ -239,7 +240,7 @@ class DmdLikeCompilerMixin:
             return args
 
         return super().build_rpath_args(
-            env, build_dir, from_dir, rpath_paths, build_rpath, install_rpath)
+            env, build_dir, from_dir, rpath_paths, build_rpath, install_rpath, rpath_dirs_to_remove)
 
     def translate_args_to_nongnu(self, args):
         dcargs = []

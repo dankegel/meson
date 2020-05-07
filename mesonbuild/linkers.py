@@ -56,7 +56,8 @@ class StaticLinker:
 
     def build_rpath_args(self, env: 'Environment', build_dir: str, from_dir: str,
                          rpath_paths: str, build_rpath: str,
-                         install_rpath: str) -> T.List[str]:
+                         install_rpath: str,
+                         rpath_dirs_to_remove: T.Set[bytes]) -> T.List[str]:
         return []
 
     def thread_link_flags(self, env: 'Environment') -> T.List[str]:
@@ -444,7 +445,8 @@ class DynamicLinker(LinkerEnvVarsMixin, metaclass=abc.ABCMeta):
 
     def build_rpath_args(self, env: 'Environment', build_dir: str, from_dir: str,
                          rpath_paths: str, build_rpath: str,
-                         install_rpath: str) -> T.List[str]:
+                         install_rpath: str,
+                         rpath_dirs_to_remove: T.Set[bytes]) -> T.List[str]:
         return []
 
     def get_soname_args(self, env: 'Environment', prefix: str, shlib_name: str,
@@ -551,7 +553,8 @@ class GnuLikeDynamicLinkerMixin:
 
     def build_rpath_args(self, env: 'Environment', build_dir: str, from_dir: str,
                          rpath_paths: str, build_rpath: str,
-                         install_rpath: str) -> T.List[str]:
+                         install_rpath: str,
+                         rpath_dirs_to_remove: T.Set[bytes]) -> T.List[str]:
         m = env.machines[self.for_machine]
         if m.is_windows() or m.is_cygwin():
             return []
@@ -564,9 +567,13 @@ class GnuLikeDynamicLinkerMixin:
         # is *very* allergic to duplicate -delete_rpath arguments
         # when calling depfixer on installation.
         all_paths = mesonlib.OrderedSet([os.path.join(origin_placeholder, p) for p in processed_rpaths])
+        for p in all_paths:
+            rpath_dirs_to_remove.add(p.encode('utf8'))
         # Build_rpath is used as-is (it is usually absolute).
         if build_rpath != '':
             all_paths.add(build_rpath)
+            for p in build_rpath.split(':'):
+                rpath_dirs_to_remove.add(p.encode('utf8'))
 
         # TODO: should this actually be "for (dragonfly|open)bsd"?
         if mesonlib.is_dragonflybsd() or mesonlib.is_openbsd():
@@ -676,7 +683,8 @@ class AppleDynamicLinker(PosixDynamicLinkerMixin, DynamicLinker):
 
     def build_rpath_args(self, env: 'Environment', build_dir: str, from_dir: str,
                          rpath_paths: str, build_rpath: str,
-                         install_rpath: str) -> T.List[str]:
+                         install_rpath: str,
+                         rpath_dirs_to_remove: T.Set[bytes]) -> T.List[str]:
         if not rpath_paths and not install_rpath and not build_rpath:
             return []
         # Ensure that there is enough space for install_name_tool in-place
@@ -763,7 +771,8 @@ class WASMDynamicLinker(GnuLikeDynamicLinkerMixin, PosixDynamicLinkerMixin, Dyna
 
     def build_rpath_args(self, env: 'Environment', build_dir: str, from_dir: str,
                          rpath_paths: str, build_rpath: str,
-                         install_rpath: str) -> T.List[str]:
+                         install_rpath: str,
+                         rpath_dirs_to_remove: T.Set[bytes]) -> T.List[str]:
         return []
 
 
@@ -839,7 +848,8 @@ class Xc16DynamicLinker(DynamicLinker):
 
     def build_rpath_args(self, env: 'Environment', build_dir: str, from_dir: str,
                          rpath_paths: str, build_rpath: str,
-                         install_rpath: str) -> T.List[str]:
+                         install_rpath: str,
+                         rpath_dirs_to_remove: T.Set[bytes]) -> T.List[str]:
         return []
 
 
@@ -938,7 +948,8 @@ class PGIDynamicLinker(PosixDynamicLinkerMixin, DynamicLinker):
 
     def build_rpath_args(self, env: 'Environment', build_dir: str, from_dir: str,
                          rpath_paths: str, build_rpath: str,
-                         install_rpath: str) -> T.List[str]:
+                         install_rpath: str,
+                         rpath_dirs_to_remove: T.Set[bytes]) -> T.List[str]:
         if not env.machines[self.for_machine].is_windows():
             return ['-R' + os.path.join(build_dir, p) for p in rpath_paths]
         return []
@@ -1091,7 +1102,8 @@ class SolarisDynamicLinker(PosixDynamicLinkerMixin, DynamicLinker):
 
     def build_rpath_args(self, env: 'Environment', build_dir: str, from_dir: str,
                          rpath_paths: str, build_rpath: str,
-                         install_rpath: str) -> T.List[str]:
+                         install_rpath: str,
+                         rpath_dirs_to_remove: T.Set[bytes]) -> T.List[str]:
         if not rpath_paths and not install_rpath and not build_rpath:
             return []
         processed_rpaths = prepare_rpaths(rpath_paths, build_dir, from_dir)

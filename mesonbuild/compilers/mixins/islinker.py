@@ -107,7 +107,8 @@ class BasicLinkerIsCompilerMixin:
 
     def build_rpath_args(self, env: 'Environment', build_dir: str, from_dir: str,
                          rpath_paths: str, build_rpath: str,
-                         install_rpath: str) -> T.List[str]:
+                         install_rpath: str,
+                         rpath_dirs_to_remove: T.Set[bytes]) -> T.List[str]:
         return []
 
     def get_linker_debug_crt_args(self) -> T.List[str]:
